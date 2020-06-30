@@ -39,7 +39,7 @@ func (l *List) Add(p []factom.PendingTransaction) {
 	}
 
 	for _, e := range l.items {
-		if notin(e, p) {
+		if notin(e, p) && e.Gone.IsZero() {
 			fmt.Println("tx", e, "disappeared")
 			e.Gone = time.Now()
 			l.disappeared = append(l.disappeared, e)
