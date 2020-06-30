@@ -75,6 +75,7 @@ func poll() {
 	}
 
 	if height.DirectoryBlockHeight > checkHeight {
+		checkHeight = height.DirectoryBlockHeight
 		if list, ok := lists[height.DirectoryBlockHeight]; ok {
 			compareWithBlock(list)
 		}
@@ -118,10 +119,10 @@ func compareWithBlock(l *List) {
 
 func main() {
 	lists = make(map[int64]*List)
-	factom.SetFactomdServer("https://api.factomd.net")
+	factom.SetFactomdServer("spoon:8088")
 	//factom.EnableCookies()
 
-	timer := time.NewTicker(time.Second)
+	timer := time.NewTicker(time.Millisecond * 250)
 	for range timer.C {
 		poll()
 	}
