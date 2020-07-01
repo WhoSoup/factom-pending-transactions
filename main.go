@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/FactomProject/factom"
@@ -28,23 +29,13 @@ type Entry struct {
 	Transaction factom.PendingTransaction
 }
 
-func (l *List) Add(p []factom.PendingTransaction) {
-	for _, t := range p {
-		if l.has[t.TxID] {
-			continue
-		}
-		l.has[t.TxID] = true
-		l.items = append(l.items, Entry{Seen: time.Now(), Transaction: t})
-		fmt.Println("added new tx", t.TxID)
+func (l *List) Add(t factom.PendingTransaction) {
+	if l.has[t.TxID] {
+		return
 	}
-
-	for _, e := range l.items {
-		if notin(e, p) && e.Gone.IsZero() {
-			fmt.Println("tx", e, "disappeared")
-			e.Gone = time.Now()
-			l.disappeared = append(l.disappeared, e)
-		}
-	}
+	l.has[t.TxID] = true
+	l.items = append(l.items, Entry{Seen: time.Now(), Transaction: t})
+	fmt.Println("added new tx", l.height, t.TxID, time.Now())
 }
 
 func notin(e Entry, p []factom.PendingTransaction) bool {
@@ -86,8 +77,11 @@ func poll() {
 		log.Println(err)
 		return
 	}
+	fmt.Fprintf(f, "%+v\n", pending)
 
-	getList(height.LeaderHeight + 1).Add(pending)
+	for _, t := range pending {
+		getList(int64(t.DBHeight)).Add(t)
+	}
 }
 
 func compareWithBlock(l *List) {
@@ -117,12 +111,17 @@ func compareWithBlock(l *List) {
 	fmt.Println("====================")
 }
 
+var f *os.File
+
 func main() {
 	lists = make(map[int64]*List)
-	factom.SetFactomdServer("spoon:8088")
+	factom.SetFactomdServer("localhost:8088")
 	//factom.EnableCookies()
 
-	timer := time.NewTicker(time.Millisecond * 250)
+	f, _ = os.Create("abc.txt")
+	defer f.Close()
+
+	timer := time.NewTicker(time.Millisecond * 100)
 	for range timer.C {
 		poll()
 	}
