@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"github.com/FactomProject/factom"
@@ -77,8 +76,6 @@ func poll() {
 		log.Println(err)
 		return
 	}
-	fmt.Fprintf(f, "%+v\n", pending)
-
 	for _, t := range pending {
 		getList(int64(t.DBHeight)).Add(t)
 	}
@@ -111,15 +108,10 @@ func compareWithBlock(l *List) {
 	fmt.Println("====================")
 }
 
-var f *os.File
-
 func main() {
 	lists = make(map[int64]*List)
 	factom.SetFactomdServer("localhost:8088")
 	//factom.EnableCookies()
-
-	f, _ = os.Create("abc.txt")
-	defer f.Close()
 
 	timer := time.NewTicker(time.Millisecond * 100)
 	for range timer.C {
